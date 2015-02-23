@@ -1,0 +1,5 @@
+---
+hooks-config:
+  message:
+    - Bad
+    - Good
