@@ -5,15 +5,24 @@
 $ git submodule add https://github.com/lubaev/git_hooks.git
 ```
 
-#### Create hook and add the following content.
+#### Create hook.
 ```sh
-$ vim .git/hooks/pre-commit
+$ touch .git/hooks/pre-commit
+$ chmod +x .git/hooks/pre-commit
 ```
-
+or
+```sh
+$ mv .git/hooks .git/.hooks
+$ mkdir hooks
+$ ln -s ${PWD}/hooks .git/hooks
+$ touch hooks/pre-commit
+$ chmod +x hooks/pre-commit
+```
+and add the following content.
 ```php
 #!/usr/bin/env php
 <?php
-require __DIR__ . '/../vendor/autoload.php';
+require 'git_hooks/vendor/autoload.php';
 
 $hook = new Elephant\Git_Hooks\Hook();
 $hook->addFunction(function (Elephant\Git_Hooks\HookHelper $helper) {
@@ -25,7 +34,7 @@ $hook->addFunction(function (Elephant\Git_Hooks\HookHelper $helper) {
             break;
         case 1:
             $helper->sendError('Bad!');
-            throw new RuntimeException('Very very bad!');
+            throw new RuntimeException('Very very bad :(');
     }
 
     $helper->sendInfo('Success!');
@@ -33,9 +42,16 @@ $hook->addFunction(function (Elephant\Git_Hooks\HookHelper $helper) {
 $hook->run();
 ```
 
+```sh
+$ chmod +x .git/hooks/pre-commit
+```
+
 #### Use config file.
 You can create a configuration file and access its content from the handler.
 The file must be in the format YAML and live in a directory with hooks.
+```sh
+$ touch .git/hooks/hooks-config.yaml
+```
 
 ```yaml
 ---
@@ -48,7 +64,7 @@ hooks-config:
 ```php
 #!/usr/bin/env php
 <?php
-require __DIR__ . '/../vendor/autoload.php';
+require 'git_hooks/vendor/autoload.php';
 
 $hook = new Elephant\Git_Hooks\Hook();
 $hook->addFunction(function (Elephant\Git_Hooks\HookHelper $helper) {
@@ -81,29 +97,32 @@ $hook->run();
 ```php
 #!/usr/bin/env php
 <?php
-require __DIR__ . '/../vendor/autoload.php';
+require 'git_hooks/vendor/autoload.php';
 
-function a(Elephant\Git_Hooks\HookHelper $helper)
+function foo(Elephant\Git_Hooks\HookHelper $helper)
 {
     # [RuntimeException] The object 'HookHelper' is closed for writing!
-    # $helper->foo = 'Lorem ipsum...';
+    # $helper->baz = 'Lorem ipsum...';
 
     $data = ['Lorem ipsum...'];
     $helper->sendData('key', $data);
-    $helper->sendInfo('Sent...'); # Output: Sent...
+    $helper->sendInfo('Sent...');
 }
 
-function b(Elephant\Git_Hooks\HookHelper $helper)
+function bar(Elephant\Git_Hooks\HookHelper $helper)
 {
-    # [RuntimeException] Property 'foo' not found!
-    # $data = $helper->foo;
+    # [RuntimeException] Property 'baz' not found!
+    # $data = $helper->baz;
 
     if ($helper->hasData('key')) {
         $data = $helper->receiveData('key');
-        $helper->sendInfo('Data: ' . json_encode($data)); # Output: Data: ["Lorem ipsum..."]
+        $helper->sendInfo(json_encode($data));
+    } else {
+        $helper->sendError('Empty!');
     }
 }
 $hook = new Elephant\Git_Hooks\Hook();
-$hook->addFunctions(['a', 'b']);
+$hook->addFunctions(['foo', 'bar']); # Output: Sent... ["Lorem ipsum..."]
+# $hook->addFunctions(['bar', 'foo']); # Output: Empty! Sent...
 $hook();
 ```
