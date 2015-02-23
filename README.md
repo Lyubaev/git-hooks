@@ -42,10 +42,6 @@ $hook->addFunction(function (Elephant\Git_Hooks\HookHelper $helper) {
 $hook->run();
 ```
 
-```sh
-$ chmod +x .git/hooks/pre-commit
-```
-
 #### Use config file.
 You can create a configuration file and access its content from the handler.
 The file must be in the format YAML and live in a directory with hooks.
