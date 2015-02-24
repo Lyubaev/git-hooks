@@ -3,3 +3,5 @@ vendor/*
 .DS_Store
 composer.phar
 composer.lock
+hooks/*
+!hooks/*.sample
