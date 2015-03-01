@@ -1,11 +1,12 @@
 <?php
+
 namespace Elephant\Git_Hooks;
 
 
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Process\ProcessBuilder;
-use Symfony\Component\Console\Output\OutputInterface;
-
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 
 /**
  * Class HookHelper
@@ -15,15 +16,15 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class HookHelper
 {
-    private $output;
-    private $data = array();
-    private $argv = array();
+    private $logger;
     private $hook = '';
+    private $argv = array();
+    private $data = array();
     private $config = array();
 
-    public function __construct(OutputInterface $output)
+    public function __construct(ConsoleLogger $logger = null)
     {
-        $this->output = $output;
+        $this->logger = (null === $logger) ? new ConsoleLogger(new ConsoleOutput()) : $logger;
 
         // Fetch raw arguments.
         $this->argv = $_SERVER['argv'];
@@ -38,6 +39,16 @@ class HookHelper
         }
     }
 
+    public function __call($name, $args)
+    {
+        if (method_exists($this->logger, $name)) {
+            call_user_func_array(array($this->logger, $name), $args);
+            return ;
+        }
+
+        throw new \BadMethodCallException(sprintf('Call to undefined method %s::%s()', __CLASS__, $name));
+    }
+
     public function __get($name)
     {
         switch ($name) {
@@ -45,6 +56,8 @@ class HookHelper
                 return $this->config;
             case 'arguments':
                 return $this->argv;
+            case 'hook':
+                return $this->hook;
             default:
                 throw new \RuntimeException("Property '$name' not found!");
         }
@@ -55,16 +68,6 @@ class HookHelper
         throw new \RuntimeException(
             sprintf('The object \'%s\' is closed for writing!', __CLASS__)
         );
-    }
-
-    public function sendInfo($message = '')
-    {
-        $this->output->writeln("<info>$message</info>");
-    }
-
-    public function sendError($message = '')
-    {
-        $this->output->writeln("<error>$message</error>");
     }
 
     public function hasData($key)

@@ -1,5 +1,4 @@
 ---
 hooks-config:
   message:
-    - Bad
-    - Good
+    - Hello World!

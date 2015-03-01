@@ -4,37 +4,33 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $hook = new Elephant\Git_Hooks\Hook();
 $hook->addFunction(function (Elephant\Git_Hooks\HookHelper $helper) {
-    $helper->sendInfo('My first hook...');
+    $helper->info('Begin...');
 
     switch (mt_rand(0, 1)) {
         case 0:
-            $helper->sendInfo('Good!');
+            $helper->info('Good!');
             break;
         case 1:
-            $helper->sendError('Bad!');
-            throw new RuntimeException('Very very bad :(');
+            $helper->error('Bad!');
+            throw new RuntimeException('Very bad :(');
     }
 
-    $helper->sendInfo('Success!');
+    $helper->info('Success!');
 });
 
 $hook->addFunction(function (Elephant\Git_Hooks\HookHelper $helper) {
-    $helper->sendInfo('Second hook...');
-
-    # Get configuration values...
-    $bad = $helper->config['hooks-config']['message'][0];
-    $good = $helper->config['hooks-config']['message'][1];
+    $helper->info('Begin...');
 
     switch (mt_rand(0, 1)) {
         case 0:
-            $helper->sendInfo($good);
+            $helper->info('Send a message: {msg}', array('msg' => $helper->config['hooks-config']['message'][0]));
             break;
         case 1:
-            $helper->sendError($bad);
+            $helper->alert('Bad!');
             throw new RuntimeException('Very very bad :(');
     }
 
-    $helper->sendInfo('Success!');
+    $helper->info('Success!');
 });
 
 $hook->run();

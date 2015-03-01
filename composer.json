@@ -14,7 +14,8 @@
         "php": ">=5.3.3",
         "symfony/console": "^2.6.4",
         "symfony/process": "^2.6.4",
-        "symfony/yaml": "^2.6.4"
+        "symfony/yaml": "^2.6.4",
+        "psr/log": "~1.0"
     },
     "require-dev": {
         "fabpot/php-cs-fixer": "~1.4.2",

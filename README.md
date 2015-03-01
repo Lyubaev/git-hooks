@@ -1,24 +1,25 @@
-# Git_Hooks
+# Git Hooks (PHP Hooks)
 ---
 #### Add as a submodule.
 ```sh
-$ git submodule add https://github.com/lubaev/git_hooks.git
+$ git submodule add https://github.com/lubaev/git-hooks.git
 ```
 
 #### Create hook.
+Rename the original directory and create a link to a new directory.
 ```sh
-$ touch .git/hooks/pre-commit
-$ chmod +x .git/hooks/pre-commit
+$ mv .git/hooks .git/sh.hooks
+$ ln -s ${PWD}/git-hooks/hooks .git/hooks
 ```
-or
+Add your first hook.
 ```sh
-$ mv .git/hooks .git/.hooks
-$ mkdir hooks
-$ ln -s ${PWD}/hooks .git/hooks
-$ touch hooks/pre-commit
-$ chmod +x hooks/pre-commit
+$ touch git-hooks/hooks/pre-commit
+$ chmod +x git-hooks/hooks/pre-commit
 ```
-and add the following content.
+
+#### Make it work!
+---
+
 ```php
 #!/usr/bin/env php
 <?php
@@ -120,5 +121,5 @@ function bar(Elephant\Git_Hooks\HookHelper $helper)
 $hook = new Elephant\Git_Hooks\Hook();
 $hook->addFunctions(['foo', 'bar']); # Output: Sent... ["Lorem ipsum..."]
 # $hook->addFunctions(['bar', 'foo']); # Output: Empty! Sent...
-$hook();
+$hook->run();
 ```

@@ -1,39 +1,68 @@
 <?php
+
 namespace Elephant\Git_Hooks;
 
-
+use SplQueue;
+use Psr\Log\LogLevel;
 use Symfony\Component\Console\Application;
-use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 
 /**
  * Class Hook
  */
 class Hook extends Application
 {
+    private $logger;
     private $queue;
+    private $output;
 
-    public function __construct($name = 'Hook')
+    public function __construct($name = 'git-hook')
     {
-        $queue = new \SplQueue();
-        $queue->setIteratorMode(\SplQueue::IT_MODE_DELETE);
+        $this->queue = new SplQueue();
+        $this->queue->setIteratorMode(SplQueue::IT_MODE_DELETE);
+        $this->output = new ConsoleOutput();
+        $this->logger = new ConsoleLogger(
+            $this->output,
+            array(
+                LogLevel::NOTICE => OutputInterface::VERBOSITY_NORMAL,
+                LogLevel::INFO   => OutputInterface::VERBOSITY_NORMAL,
+                LogLevel::DEBUG  => OutputInterface::VERBOSITY_NORMAL,
+            )
+        );
 
         parent::__construct($name);
     }
 
-    public function __invoke()
+    public function __call($name, $args)
     {
-        return $this->run();
+        if (method_exists($this->logger, $name)) {
+            call_user_func_array(array($this->logger, $name), $args);
+            return ;
+        }
+
+        $this->renderException(
+            new \BadMethodCallException(sprintf('Call to undefined method %s::%s()', __CLASS__, $name)),
+            $this->output
+        );
+
+        exit(1);
     }
 
     public function addFunction($function)
     {
-        if (!is_callable($function)) {
-            throw new \InvalidArgumentException('Argument 1 must be callable!');
+        if (is_callable($function)) {
+            $this->queue[] = $function;
+            return ;
         }
 
-        $this->queue[] = $function;
+        $this->renderException(
+            new \InvalidArgumentException('Argument 1 must be callable!'),
+            $this->output
+        );
+
+        exit(1);
     }
 
     public function addFunctions(array $functions)
@@ -43,9 +72,14 @@ class Hook extends Application
         }
     }
 
-    public function doRun(InputInterface $input, OutputInterface $output)
+    public function run()
     {
-        $helper = new HookHelper($output);
+        parent::run(null, $this->output);
+    }
+
+    public function doRun()
+    {
+        $helper = new HookHelper($this->logger);
         foreach ($this->queue as $function) {
             call_user_func($function, $helper);
         }
